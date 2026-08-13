@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joymiz Budget - Free Personal Budget Planner</title>
+    <meta name="description" content="Free personal budget planner. Track income and expenses, visualize spending, and stay on top of your finances. No sign-up required.">
+    <meta name="keywords" content="budget planner, personal budget, expense tracker, budget calculator, free budget tool">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #dbeafe;
+            --nav-bg: #0f172a;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --danger: #dc2626;
+            --danger-light: #fee2e2;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --white: #ffffff;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: var(--gray-800); background: var(--gray-50); }
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        header { background: var(--nav-bg); position: sticky; top: 0; z-index: 100; }
+        .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+        .logo { font-size: 1.25rem; font-weight: 700; color: var(--white); text-decoration: none; }
+        .logo span { color: #60a5fa; }
+        .nav-links { display: flex; list-style: none; gap: 8px; }
+        .nav-links a { padding: 8px 16px; border-radius: var(--radius); color: var(--gray-300); font-size: 0.9rem; font-weight: 500; transition: all 0.2s; text-decoration: none; }
+        .nav-links a:hover { background: rgba(255,255,255,0.1); color: var(--white); text-decoration: none; }
+        .mobile-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+        .mobile-menu-btn span { display: block; width: 24px; height: 2px; background: var(--white); margin: 5px 0; transition: 0.3s; }
+
+        .hero { text-align: center; padding: 60px 0 40px; background: linear-gradient(135deg, var(--nav-bg) 0%, #1e3a5f 100%); color: var(--white); }
+        .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 12px; }
+        .hero p { font-size: 1.1rem; color: var(--gray-300); max-width: 600px; margin: 0 auto; }
+
+        .month-selector { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 30px auto; max-width: 900px; }
+        .month-btn { padding: 10px 18px; border: 2px solid var(--gray-200); border-radius: var(--radius); background: var(--white); cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--gray-600); transition: all 0.15s; }
+        .month-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .month-btn.active { border-color: var(--primary); background: var(--primary); color: var(--white); }
+
+        .budget-app { max-width: 1200px; margin: 0 auto 60px; padding: 0 20px; }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+        .summary-card { background: var(--white); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-md); text-align: center; border-top: 4px solid var(--primary); }
+        .summary-card.income { border-top-color: var(--success); }
+        .summary-card.budgeted { border-top-color: var(--primary); }
+        .summary-card.spent { border-top-color: var(--danger); }
+        .summary-card.remaining { border-top-color: var(--warning); }
+        .summary-card h3 { font-size: 0.85rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .summary-card .amount { font-size: 1.8rem; font-weight: 700; color: var(--gray-900); }
+        .summary-card .amount.positive { color: var(--success); }
+        .summary-card .amount.negative { color: var(--danger); }
+
+        .main-layout { display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
+
+        .categories-panel { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow: hidden; }
+        .panel-header { padding: 20px 24px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; }
+        .panel-header h2 { font-size: 1.1rem; font-weight: 700; color: var(--gray-900); }
+
+        .add-category-form { padding: 20px 24px; border-bottom: 1px solid var(--gray-200); background: var(--gray-50); display: none; }
+        .add-category-form.visible { display: block; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 0.8rem; font-weight: 600; color: var(--gray-600); }
+        .form-group input { padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 0.9rem; transition: border-color 0.15s; }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+        .btn { padding: 10px 20px; border: none; border-radius: var(--radius); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .btn-primary { background: var(--primary); color: var(--white); }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-outline { background: var(--white); color: var(--primary); border: 2px solid var(--primary); }
+        .btn-outline:hover { background: var(--primary-light); }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .btn-danger { background: var(--danger); color: var(--white); }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-success { background: var(--success); color: var(--white); }
+        .btn-success:hover { background: var(--success-dark); }
+
+        .category-list { max-height: 500px; overflow-y: auto; }
+        .category-item { padding: 16px 24px; border-bottom: 1px solid var(--gray-100); transition: background 0.15s; }
+        .category-item:hover { background: var(--gray-50); }
+        .category-item:last-child { border-bottom: none; }
+        .category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .category-name { font-weight: 600; color: var(--gray-800); }
+        .category-delete { background: none; border: none; color: var(--gray-400); cursor: pointer; padding: 4px; font-size: 1.1rem; line-height: 1; }
+        .category-delete:hover { color: var(--danger); }
+        .category-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+        .category-inputs .form-group input { width: 100%; }
+        .progress-bar-container { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
+        .progress-bar { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+        .progress-bar.under { background: var(--success); }
+        .progress-bar.over { background: var(--danger); }
+        .progress-bar.empty { background: var(--gray-300); }
+        .progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--gray-500); margin-top: 4px; }
+
+        .charts-panel { display: flex; flex-direction: column; gap: 20px; }
+        .chart-card { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 24px; }
+        .chart-card h3 { font-size: 1rem; font-weight: 700; color: var(--gray-900); margin-bottom: 16px; }
+        .pie-chart-container { display: flex; justify-content: center; align-items: center; }
+        .pie-legend { margin-top: 16px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.85rem; color: var(--gray-700); }
+        .legend-color { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+        .legend-amount { margin-left: auto; font-weight: 600; }
+
+        .actions-bar { display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--gray-400); }
+        .empty-state p { font-size: 0.95rem; }
+
+        footer { background: var(--nav-bg); color: var(--gray-400); padding-top: 60px; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; padding-bottom: 40px; }
+        .footer-brand .logo { font-size: 1.5rem; display: block; margin-bottom: 12px; }
+        .footer-brand p { font-size: 0.9rem; line-height: 1.7; color: var(--gray-400); }
+        .footer-col h4 { color: var(--white); font-size: 0.95rem; font-weight: 600; margin-bottom: 16px; }
+        .footer-col ul { list-style: none; }
+        .footer-col ul li { margin-bottom: 10px; }
+        .footer-col ul a { color: var(--gray-400); font-size: 0.9rem; transition: color 0.2s; }
+        .footer-col ul a:hover { color: var(--white); text-decoration: none; }
+        .footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 0; text-align: center; font-size: 0.85rem; }
+        .footer-products { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .footer-products a { display: inline-block; padding: 4px 12px; background: rgba(255,255,255,0.08); border-radius: 20px; font-size: 0.8rem; color: var(--gray-300); transition: all 0.2s; }
+        .footer-products a:hover { background: var(--primary); color: var(--white); text-decoration: none; }
+
+        @media (max-width: 900px) {
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .main-layout { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 600px) {
+            .summary-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+            .mobile-menu-btn { display: block; }
+            .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 64px; left: 0; right: 0; background: var(--nav-bg); padding: 16px; }
+            .hero h1 { font-size: 1.8rem; }
+            .month-selector { gap: 6px; }
+            .month-btn { padding: 8px 12px; font-size: 0.8rem; }
+            .category-inputs { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .actions-bar { flex-direction: column; }
+        }
+
+        @media print {
+            header, .month-selector, .add-category-form, .panel-header, .actions-bar, footer { display: none !important; }
+            .hero { padding: 20px 0; background: none; color: var(--gray-900); }
+            .hero h1 { font-size: 1.5rem; }
+            .hero p { color: var(--gray-600); }
+            .main-layout { grid-template-columns: 1fr; }
+            .summary-card { border-top-width: 2px; }
+            .budget-app { margin: 0; padding: 0 20px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="nav container">
+            <a href="index.html" class="logo">Joymiz <span>Budget</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Budget Planner</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="help.html">Help</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Free Personal Budget Planner</h1>
+            <p>Track your income and expenses. Visualize your spending. Stay on top of your finances — all in your browser.</p>
+        </div>
+    </section>
+
+    <div class="month-selector" id="monthSelector"></div>
+
+    <div class="budget-app">
+        <div class="summary-grid">
+            <div class="summary-card income">
+                <h3>Total Income</h3>
+                <div class="amount positive" id="totalIncome">$0.00</div>
+            </div>
+            <div class="summary-card budgeted">
+                <h3>Total Budgeted</h3>
+                <div class="amount" id="totalBudgeted">$0.00</div>
+            </div>
+            <div class="summary-card spent">
+                <h3>Total Spent</h3>
+                <div class="amount" id="totalSpent">$0.00</div>
+            </div>
+            <div class="summary-card remaining">
+                <h3>Remaining</h3>
+                <div class="amount" id="totalRemaining">$0.00</div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="categories-panel">
+                <div class="panel-header">
+                    <h2>Categories</h2>
+                    <button class="btn btn-primary btn-sm" id="toggleAddForm">+ Add Category</button>
+                </div>
+                <div class="add-category-form" id="addCategoryForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newCatName">Category Name</label>
+                            <input type="text" id="newCatName" placeholder="e.g. Groceries">
+                        </div>
+                        <div class="form-group">
+                            <label for="newCatBudget">Budgeted ($)</label>
+                            <input type="number" id="newCatBudget" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="newCatSpent">Spent ($)</label>
+                            <input type="number" id="newCatSpent" placeholder="0.00" min="0" step="0.01">
+                        </div>
+                        <button class="btn btn-success btn-sm" id="addCategoryBtn">Add</button>
+                    </div>
+                </div>
+                <div class="category-list" id="categoryList"></div>
+            </div>
+
+            <div class="charts-panel">
+                <div class="chart-card">
+                    <h3>Spending Breakdown</h3>
+                    <div class="pie-chart-container">
+                        <canvas id="pieChart" width="280" height="280"></canvas>
+                    </div>
+                    <div class="pie-legend" id="pieLegend"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>Budget vs Actual</h3>
+                    <canvas id="barChart" width="360" height="280"></canvas>
+                </div>
+                <div class="actions-bar">
+                    <button class="btn btn-outline btn-sm" id="incomeBtn">Set Income</button>
+                    <button class="btn btn-outline btn-sm" id="exportBtn">Export CSV</button>
+                    <button class="btn btn-primary btn-sm" id="printBtn">Print Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo">Joymiz <span style="color:#60a5fa">Budget</span></div>
+                    <p>Free personal budget planner. Track your income and expenses with privacy — all data stays in your browser.</p>
+                    <div class="footer-products">
+                        <a href="../joymiz-calculator/">Calculator</a>
+                        <a href="../joymiz-invoice/">Invoice</a>
+                        <a href="../joymiz-qr/">QR Code</a>
+                        <a href="../joymiz-cv/">CV Builder</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="index.html">Budget Planner</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="help.html">Help & FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="contact.html">Contact Us</a></li>
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>More from Joymiz</h4>
+                    <ul>
+                        <li><a href="https://joymiz.com" target="_blank" rel="noopener">Joymiz.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 Joymiz. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+<script>
+(function() {
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var DEFAULT_CATEGORIES = ['Housing','Transport','Food','Utilities','Entertainment','Savings','Other'];
+    var COLORS = ['#2563eb','#16a34a','#f59e0b','#dc2626','#8b5cf6','#ec4899','#06b6d4','#f97316','#84cc16','#6366f1'];
+
+    var currentMonth = new Date().getMonth();
+    var budgetData = loadBudgetData();
+    var totalIncome = 0;
+
+    function loadBudgetData() {
+        try {
+            var saved = localStorage.getItem('joymiz_budget');
+            return saved ? JSON.parse(saved) : {};
+        } catch(e) { return {}; }
+    }
+
+    function saveBudgetData() {
+        try { localStorage.setItem('joymiz_budget', JSON.stringify(budgetData)); } catch(e) {}
+    }
+
+    function getMonthData() {
+        if (!budgetData[currentMonth]) {
+            budgetData[currentMonth] = {
+                income: 0,
+                categories: DEFAULT_CATEGORIES.map(function(name) {
+                    return { name: name, budget: 0, spent: 0, isDefault: true };
+                })
+            };
+        }
+        return budgetData[currentMonth];
+    }
+
+    function fmt(amount) {
+        return '$' + (amount || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function renderMonthSelector() {
+        var container = document.getElementById('monthSelector');
+        container.innerHTML = '';
+        MONTHS.forEach(function(month, i) {
+            var btn = document.createElement('button');
+            btn.className = 'month-btn' + (i === currentMonth ? ' active' : '');
+            btn.textContent = month.substring(0, 3);
+            btn.addEventListener('click', function() {
+                currentMonth = i;
+                render();
+            });
+            container.appendChild(btn);
+        });
+    }
+
+    function renderCategories() {
+        var data = getMonthData();
+        var list = document.getElementById('categoryList');
+        list.innerHTML = '';
+
+        if (data.categories.length === 0) {
+            list.innerHTML = '<div class="empty-state"><p>No categories yet. Add one to get started.</p></div>';
+            return;
+        }
+
+        data.categories.forEach(function(cat, idx) {
+            var pct = cat.budget > 0 ? Math.min((cat.spent / cat.budget) * 100, 100) : 0;
+            var isOver = cat.spent > cat.budget && cat.budget > 0;
+            var barClass = cat.budget === 0 && cat.spent === 0 ? 'empty' : (isOver ? 'over' : 'under');
+            var diff = cat.budget - cat.spent;
+            var diffText = isOver ? ('Over by ' + fmt(Math.abs(diff))) : (cat.budget > 0 ? (diff >= 0 ? fmt(diff) + ' left' : '') : '');
+
+            var item = document.createElement('div');
+            item.className = 'category-item';
+            item.innerHTML =
+                '<div class="category-header">' +
+                    '<span class="category-name">' + escHtml(cat.name) + '</span>' +
+                    '<button class="category-delete" data-idx="' + idx + '" title="Remove category">&times;</button>' +
+                '</div>' +
+                '<div class="category-inputs">' +
+                    '<div class="form-group">' +
+                        '<label>Budgeted ($)</label>' +
+                        '<input type="number" class="cat-budget" data-idx="' + idx + '" value="' + (cat.budget || '') + '" min="0" step="0.01" placeholder="0.00">' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                        '<label>Spent ($)</label>' +
+                        '<input type="number" class="cat-spent" data-idx="' + idx + '" value="' + (cat.spent || '') + '" min="0" step="0.01" placeholder="0.00">' +
+                    '</div>' +
+                '</div>' +
+                '<div class="progress-bar-container">' +
+                    '<div class="progress-bar ' + barClass + '" style="width:' + pct + '%"></div>' +
+                '</div>' +
+                '<div class="progress-label">' +
+                    '<span>' + fmt(cat.spent) + ' / ' + fmt(cat.budget) + '</span>' +
+                    '<span>' + (cat.budget > 0 ? Math.round(pct) + '%' : '') + '</span>' +
+                '</div>';
+
+            list.appendChild(item);
+        });
+
+        list.querySelectorAll('.category-delete').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = parseInt(btn.dataset.idx);
+                data.categories.splice(idx, 1);
+                saveBudgetData();
+                render();
+            });
+        });
+
+        list.querySelectorAll('.cat-budget').forEach(function(input) {
+            input.addEventListener('input', function() {
+                var idx = parseInt(input.dataset.idx);
+                data.categories[idx].budget = parseFloat(input.value) || 0;
+                saveBudgetData();
+                renderSummary();
+                renderCharts();
+                updateProgressBars();
+            });
+        });
+
+        list.querySelectorAll('.cat-spent').forEach(function(input) {
+            input.addEventListener('input', function() {
+                var idx = parseInt(input.dataset.idx);
+                data.categories[idx].spent = parseFloat(input.value) || 0;
+                saveBudgetData();
+                renderSummary();
+                renderCharts();
+                updateProgressBars();
+            });
+        });
+    }
+
+    function updateProgressBars() {
+        var data = getMonthData();
+        var items = document.querySelectorAll('.category-item');
+        items.forEach(function(item, idx) {
+            var cat = data.categories[idx];
+            if (!cat) return;
+            var pct = cat.budget > 0 ? Math.min((cat.spent / cat.budget) * 100, 100) : 0;
+            var isOver = cat.spent > cat.budget && cat.budget > 0;
+            var bar = item.querySelector('.progress-bar');
+            bar.className = 'progress-bar ' + (cat.budget === 0 && cat.spent === 0 ? 'empty' : (isOver ? 'over' : 'under'));
+            bar.style.width = pct + '%';
+            var labels = item.querySelectorAll('.progress-label span');
+            labels[0].textContent = fmt(cat.spent) + ' / ' + fmt(cat.budget);
+            labels[1].textContent = cat.budget > 0 ? Math.round(pct) + '%' : '';
+        });
+    }
+
+    function renderSummary() {
+        var data = getMonthData();
+        var tb = 0, ts = 0;
+        data.categories.forEach(function(c) { tb += c.budget || 0; ts += c.spent || 0; });
+        var rem = totalIncome - ts;
+
+        document.getElementById('totalIncome').textContent = fmt(totalIncome);
+        document.getElementById('totalBudgeted').textContent = fmt(tb);
+        document.getElementById('totalSpent').textContent = fmt(ts);
+
+        var remEl = document.getElementById('totalRemaining');
+        remEl.textContent = fmt(rem);
+        remEl.className = 'amount ' + (rem >= 0 ? 'positive' : 'negative');
+    }
+
+    function renderPieChart() {
+        var canvas = document.getElementById('pieChart');
+        var ctx = canvas.getContext('2d');
+        var data = getMonthData();
+        var legend = document.getElementById('pieLegend');
+        var size = Math.min(canvas.parentElement.offsetWidth, 280);
+        canvas.width = size * 2;
+        canvas.height = size * 2;
+        canvas.style.width = size + 'px';
+        canvas.style.height = size + 'px';
+        ctx.scale(2, 2);
+
+        var cx = size / 2, cy = size / 2, r = size / 2 - 10;
+        var total = 0;
+        var spending = [];
+        data.categories.forEach(function(c) {
+            if (c.spent > 0) {
+                total += c.spent;
+                spending.push({ name: c.name, amount: c.spent });
+            }
+        });
+
+        ctx.clearRect(0, 0, size, size);
+
+        if (total === 0) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = '#e5e7eb';
+            ctx.fill();
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '14px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('No spending data', cx, cy + 5);
+            legend.innerHTML = '';
+            return;
+        }
+
+        var startAngle = -Math.PI / 2;
+        legend.innerHTML = '';
+        spending.forEach(function(item, i) {
+            var slice = (item.amount / total) * Math.PI * 2;
+            var color = COLORS[i % COLORS.length];
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, r, startAngle, startAngle + slice);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+            startAngle += slice;
+
+            legend.innerHTML += '<div class="legend-item">' +
+                '<div class="legend-color" style="background:' + color + '"></div>' +
+                '<span>' + escHtml(item.name) + '</span>' +
+                '<span class="legend-amount">' + fmt(item.amount) + '</span>' +
+            '</div>';
+        });
+
+        if (total > 0) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.fillStyle = '#111827';
+            ctx.font = 'bold 18px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(fmt(total), cx, cy - 2);
+            ctx.font = '12px -apple-system, sans-serif';
+            ctx.fillStyle = '#6b7280';
+            ctx.fillText('Total Spent', cx, cy + 16);
+        }
+    }
+
+    function renderBarChart() {
+        var canvas = document.getElementById('barChart');
+        var ctx = canvas.getContext('2d');
+        var data = getMonthData();
+        var cw = canvas.parentElement.offsetWidth - 48;
+        var ch = 280;
+        canvas.width = cw * 2;
+        canvas.height = ch * 2;
+        canvas.style.width = cw + 'px';
+        canvas.style.height = ch + 'px';
+        ctx.scale(2, 2);
+        ctx.clearRect(0, 0, cw, ch);
+
+        var cats = data.categories.filter(function(c) { return c.budget > 0 || c.spent > 0; });
+        if (cats.length === 0) {
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '14px -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Add budget data to see chart', cw / 2, ch / 2);
+            return;
+        }
+
+        var maxVal = 0;
+        cats.forEach(function(c) { maxVal = Math.max(maxVal, c.budget, c.spent); });
+        if (maxVal === 0) maxVal = 100;
+
+        var pad = { top: 20, right: 20, bottom: 60, left: 50 };
+        var chartW = cw - pad.left - pad.right;
+        var chartH = ch - pad.top - pad.bottom;
+        var barW = Math.min(chartW / cats.length * 0.35, 24);
+        var gap = chartW / cats.length;
+
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 1;
+        for (var i = 0; i <= 4; i++) {
+            var y = pad.top + chartH - (chartH * i / 4);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y);
+            ctx.lineTo(cw - pad.right, y);
+            ctx.stroke();
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '11px -apple-system, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(fmt(maxVal * i / 4), pad.left - 8, y + 4);
+        }
+
+        cats.forEach(function(cat, idx) {
+            var x = pad.left + gap * idx + gap / 2;
+            var budgetH = (cat.budget / maxVal) * chartH;
+            var spentH = (cat.spent / maxVal) * chartH;
+
+            ctx.fillStyle = '#dbeafe';
+            ctx.fillRect(x - barW - 2, pad.top + chartH - budgetH, barW, budgetH);
+            ctx.fillStyle = cat.spent > cat.budget ? '#dc2626' : '#2563eb';
+            ctx.fillRect(x + 2, pad.top + chartH - spentH, barW, spentH);
+
+            ctx.save();
+            ctx.translate(x, pad.top + chartH + 10);
+            ctx.rotate(-Math.PI / 4);
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '11px -apple-system, sans-serif';
+            ctx.textAlign = 'right';
+            var label = cat.name.length > 10 ? cat.name.substring(0, 10) + '...' : cat.name;
+            ctx.fillText(label, 0, 0);
+            ctx.restore();
+        });
+
+        ctx.fillStyle = '#dbeafe';
+        ctx.fillRect(cw - pad.right - 120, 10, 12, 12);
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '11px -apple-system, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Budget', cw - pad.right - 104, 20);
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(cw - pad.right - 120, 28, 12, 12);
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('Actual', cw - pad.right - 104, 38);
+    }
+
+    function renderCharts() {
+        renderPieChart();
+        renderBarChart();
+    }
+
+    function render() {
+        renderMonthSelector();
+        renderCategories();
+        renderSummary();
+        renderCharts();
+    }
+
+    function escHtml(str) {
+        var div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    document.getElementById('toggleAddForm').addEventListener('click', function() {
+        document.getElementById('addCategoryForm').classList.toggle('visible');
+    });
+
+    document.getElementById('addCategoryBtn').addEventListener('click', function() {
+        var name = document.getElementById('newCatName').value.trim();
+        var budget = parseFloat(document.getElementById('newCatBudget').value) || 0;
+        var spent = parseFloat(document.getElementById('newCatSpent').value) || 0;
+        if (!name) { document.getElementById('newCatName').focus(); return; }
+        var data = getMonthData();
+        data.categories.push({ name: name, budget: budget, spent: spent, isDefault: false });
+        saveBudgetData();
+        document.getElementById('newCatName').value = '';
+        document.getElementById('newCatBudget').value = '';
+        document.getElementById('newCatSpent').value = '';
+        document.getElementById('addCategoryForm').classList.remove('visible');
+        render();
+    });
+
+    document.getElementById('incomeBtn').addEventListener('click', function() {
+        var val = prompt('Enter your total monthly income:', totalIncome);
+        if (val !== null) {
+            totalIncome = parseFloat(val) || 0;
+            var data = getMonthData();
+            data.income = totalIncome;
+            saveBudgetData();
+            renderSummary();
+        }
+    });
+
+    document.getElementById('printBtn').addEventListener('click', function() {
+        window.print();
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        var data = getMonthData();
+        var csv = 'Category,Budgeted,Spent,Remaining\n';
+        data.categories.forEach(function(c) {
+            csv += '"' + c.name + '",' + (c.budget || 0) + ',' + (c.spent || 0) + ',' + ((c.budget || 0) - (c.spent || 0)) + '\n';
+        });
+        var tb = 0, ts = 0;
+        data.categories.forEach(function(c) { tb += c.budget || 0; ts += c.spent || 0; });
+        csv += '\nTotal,' + tb + ',' + ts + ',' + (tb - ts) + '\n';
+        csv += 'Income,' + totalIncome + '\n';
+
+        var blob = new Blob([csv], { type: 'text/csv' });
+        var link = document.createElement('a');
+        link.download = 'joymiz-budget-' + MONTHS[currentMonth].toLowerCase() + '.csv';
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+    });
+
+    document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+        document.getElementById('navLinks').classList.toggle('open');
+    });
+
+    window.addEventListener('resize', function() { renderCharts(); });
+
+    var initData = getMonthData();
+    totalIncome = initData.income || 0;
+    render();
+})();
+</script>
+</body>
+</html>
